@@ -8,8 +8,9 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o"
 
     azure_openai_endpoint: str = ""
-    azure_openai_key: str = ""
-    azure_openai_deployment: str = ""
+    azure_openai_api_key: str = ""
+    azure_openai_chat_model_deployment_name: str = ""
+    azure_openai_api_version: str = "2024-12-01-preview"
 
     google_api_key: str = ""
     google_model: str = "gemini-2.0-flash"

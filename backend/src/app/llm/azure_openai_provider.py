@@ -9,10 +9,10 @@ class AzureOpenAIProvider(LLMProvider):
     def __init__(self):
         self.client = AzureOpenAI(
             azure_endpoint=settings.azure_openai_endpoint,
-            api_key=settings.azure_openai_key,
-            api_version="2024-12-01-preview",
+            api_key=settings.azure_openai_api_key,
+            api_version=settings.azure_openai_api_version,
         )
-        self.deployment = settings.azure_openai_deployment
+        self.deployment = settings.azure_openai_chat_model_deployment_name
 
     def _call_api(self, prompt: str) -> str:
         response = self.client.chat.completions.create(
