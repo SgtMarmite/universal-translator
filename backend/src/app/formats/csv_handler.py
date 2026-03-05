@@ -1,6 +1,5 @@
+import csv
 from pathlib import Path
-
-import pandas as pd
 
 from app.formats.base import FormatHandler, register
 from app.models.job import TextSegment
@@ -9,23 +8,43 @@ from app.models.job import TextSegment
 @register([".csv"])
 class CsvHandler(FormatHandler):
     def extract_texts(self, file_path: Path) -> list[TextSegment]:
-        df = pd.read_csv(file_path)
         segments = []
-        for col in df.columns:
-            if df[col].dtype == object:
-                for idx, value in df[col].items():
-                    if pd.notna(value) and str(value).strip():
+        with open(file_path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row_idx, row in enumerate(reader):
+                for col, value in row.items():
+                    if value and value.strip() and not self._is_numeric(value.strip()):
                         segments.append(TextSegment(
-                            id=f"{col}:{idx}",
-                            text=str(value).strip(),
+                            id=f"{col}:{row_idx}",
+                            text=value.strip(),
                             context=f"Column: {col}",
-                            metadata={"column": col, "row": idx},
+                            metadata={"column": col, "row": row_idx},
                         ))
         return segments
 
     def replace_texts(self, file_path: Path, translated: list[TextSegment], output_path: Path) -> None:
-        df = pd.read_csv(file_path)
-        for seg in translated:
-            col, idx = seg.id.rsplit(":", 1)
-            df.at[int(idx), col] = seg.text
-        df.to_csv(output_path, index=False)
+        lookup = {seg.id: seg.text for seg in translated}
+
+        with open(file_path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            fieldnames = reader.fieldnames
+            rows = list(reader)
+
+        for row_idx, row in enumerate(rows):
+            for col in row:
+                key = f"{col}:{row_idx}"
+                if key in lookup:
+                    row[col] = lookup[key]
+
+        with open(output_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(rows)
+
+    @staticmethod
+    def _is_numeric(value: str) -> bool:
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
