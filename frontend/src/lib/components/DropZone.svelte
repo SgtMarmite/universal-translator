@@ -1,5 +1,5 @@
 <script lang="ts">
-	let { onFileDrop, formats }: { onFileDrop: (file: File) => void; formats: Record<string, string> } = $props();
+	let { onFilesDrop, formats }: { onFilesDrop: (files: File[]) => void; formats: Record<string, string> } = $props();
 
 	let isDragging = $state(false);
 	let fileInput: HTMLInputElement;
@@ -7,8 +7,8 @@
 	function handleDrop(e: DragEvent) {
 		e.preventDefault();
 		isDragging = false;
-		const file = e.dataTransfer?.files[0];
-		if (file) onFileDrop(file);
+		const files = Array.from(e.dataTransfer?.files ?? []);
+		if (files.length) onFilesDrop(files);
 	}
 
 	function handleDragOver(e: DragEvent) {
@@ -26,8 +26,8 @@
 
 	function handleFileSelect(e: Event) {
 		const target = e.target as HTMLInputElement;
-		const file = target.files?.[0];
-		if (file) onFileDrop(file);
+		const files = Array.from(target.files ?? []);
+		if (files.length) onFilesDrop(files);
 		target.value = '';
 	}
 
@@ -50,6 +50,7 @@
 		type="file"
 		accept={acceptExtensions}
 		onchange={handleFileSelect}
+		multiple
 		hidden
 	/>
 	<div class="drop-content">
@@ -60,7 +61,7 @@
 				<line x1="12" y1="3" x2="12" y2="15" />
 			</svg>
 		</div>
-		<p class="drop-text">Drop a file here or <span class="browse">browse</span></p>
+		<p class="drop-text">Drop files here or <span class="browse">browse</span></p>
 		<div class="format-tags">
 			{#each formatTags as { ext, name }}
 				<span class="tag">{ext}</span>

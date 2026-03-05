@@ -52,12 +52,15 @@
 		}
 	}
 
-	async function handleFileDrop(file: File) {
+	async function handleFilesDrop(files: File[]) {
 		if (!session) return;
 
-		const ext = '.' + file.name.split('.').pop()?.toLowerCase();
-		if (!session.formats[ext]) {
-			error = `Unsupported format: ${ext}`;
+		const unsupported = files.filter((f) => {
+			const ext = '.' + f.name.split('.').pop()?.toLowerCase();
+			return !session!.formats[ext];
+		});
+		if (unsupported.length) {
+			error = `Unsupported: ${unsupported.map((f) => f.name).join(', ')}`;
 			return;
 		}
 
@@ -65,7 +68,9 @@
 		uploading = true;
 
 		try {
-			await uploadFile(file, sourceLang, targetLang, instructions);
+			for (const file of files) {
+				await uploadFile(file, sourceLang, targetLang, instructions);
+			}
 			await refreshJobs();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Upload failed';
@@ -94,7 +99,7 @@
 
 			{#if session}
 				<div class="card">
-					<DropZone onFileDrop={handleFileDrop} formats={session.formats} />
+					<DropZone onFilesDrop={handleFilesDrop} formats={session.formats} />
 
 					<div class="divider"></div>
 
