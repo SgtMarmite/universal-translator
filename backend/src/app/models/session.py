@@ -1,0 +1,32 @@
+SUPPORTED_FORMATS = {
+    ".txt": "Plain Text",
+    ".csv": "CSV",
+    ".docx": "Word Document",
+    ".xlsx": "Excel Spreadsheet",
+    ".pptx": "PowerPoint Presentation",
+}
+
+SUPPORTED_LANGUAGES = [
+    "auto",
+    "english",
+    "spanish",
+    "french",
+    "german",
+    "italian",
+    "portuguese",
+    "dutch",
+    "russian",
+    "chinese",
+    "japanese",
+    "korean",
+    "arabic",
+    "hindi",
+    "turkish",
+    "polish",
+    "czech",
+    "swedish",
+    "norwegian",
+    "danish",
+    "finnish",
+    "ukrainian",
+]
