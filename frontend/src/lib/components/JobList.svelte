@@ -7,7 +7,7 @@
 
 {#if jobs.length > 0}
 	<div class="job-list">
-		<h2>Translation Queue</h2>
+		<h2>Queue</h2>
 		<div class="jobs">
 			{#each jobs as job (job.job_id)}
 				<JobItem {job} onRemove={onRefresh} />
@@ -22,15 +22,18 @@
 	}
 
 	h2 {
-		color: #e2e8f0;
-		font-size: 1.1rem;
-		margin: 0 0 0.75rem 0;
-		font-weight: 500;
+		color: var(--text-muted);
+		font-size: 0.7rem;
+		margin: 0 0 0.6rem 0;
+		font-weight: 400;
+		font-family: var(--font-display);
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
 	}
 
 	.jobs {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		gap: 0.4rem;
 	}
 </style>

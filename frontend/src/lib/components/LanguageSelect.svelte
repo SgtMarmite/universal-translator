@@ -12,6 +12,13 @@
 	function capitalize(s: string): string {
 		return s.charAt(0).toUpperCase() + s.slice(1);
 	}
+
+	function swap() {
+		if (sourceLang === 'auto') return;
+		const tmp = sourceLang;
+		sourceLang = targetLang;
+		targetLang = tmp;
+	}
 </script>
 
 <div class="language-select">
@@ -26,7 +33,13 @@
 		</select>
 	</div>
 
-	<span class="arrow">&#8594;</span>
+	<button class="swap-btn" onclick={swap} title="Swap languages" disabled={sourceLang === 'auto'}>
+		<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M7 16l-4-4 4-4" />
+			<path d="M17 8l4 4-4 4" />
+			<path d="M3 12h18" />
+		</svg>
+	</button>
 
 	<div class="select-group">
 		<label for="target-lang">To</label>
@@ -42,42 +55,74 @@
 	.language-select {
 		display: flex;
 		align-items: end;
-		gap: 1rem;
-		justify-content: center;
+		gap: 0.75rem;
 	}
 
 	.select-group {
 		display: flex;
 		flex-direction: column;
 		gap: 0.35rem;
+		flex: 1;
 	}
 
 	label {
-		font-size: 0.8rem;
-		color: #a0aec0;
+		font-size: 0.65rem;
+		color: var(--text-muted);
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
+		letter-spacing: 0.1em;
+		font-family: var(--font-display);
+		font-weight: 400;
 	}
 
 	select {
-		padding: 0.6rem 1rem;
-		border-radius: 8px;
-		border: 1px solid #4a5568;
-		background: #2d3748;
-		color: #e2e8f0;
-		font-size: 0.95rem;
-		min-width: 160px;
+		padding: 0.6rem 0.75rem;
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--border);
+		background: var(--bg-input);
+		color: var(--text-primary);
+		font-size: 0.9rem;
+		font-family: var(--font-body);
 		cursor: pointer;
+		width: 100%;
+		appearance: none;
+		-webkit-appearance: none;
+		background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237a7a96' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 0.75rem center;
+		padding-right: 2rem;
+		transition: border-color 0.2s;
 	}
 
 	select:focus {
 		outline: none;
-		border-color: #667eea;
+		border-color: var(--accent);
 	}
 
-	.arrow {
-		font-size: 1.5rem;
-		color: #667eea;
-		padding-bottom: 0.4rem;
+	select:hover {
+		border-color: var(--border-hover);
+	}
+
+	.swap-btn {
+		background: none;
+		border: 1px solid var(--border);
+		color: var(--text-muted);
+		cursor: pointer;
+		padding: 0.55rem;
+		border-radius: var(--radius-sm);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s;
+		flex-shrink: 0;
+	}
+
+	.swap-btn:hover:not(:disabled) {
+		border-color: var(--accent);
+		color: var(--accent);
+	}
+
+	.swap-btn:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
 	}
 </style>
