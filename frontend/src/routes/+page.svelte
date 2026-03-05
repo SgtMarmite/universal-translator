@@ -7,6 +7,8 @@
 	import Instructions from '$lib/components/Instructions.svelte';
 	import JobList from '$lib/components/JobList.svelte';
 
+	const STORAGE_KEY = 'ut-settings';
+
 	let session = $state<SessionInfo | null>(null);
 	let jobs = $state<Job[]>([]);
 	let sourceLang = $state('auto');
@@ -18,10 +20,24 @@
 	let mounted = $state(false);
 
 	onMount(async () => {
+		try {
+			const raw = localStorage.getItem(STORAGE_KEY);
+			if (raw) {
+				const saved = JSON.parse(raw);
+				sourceLang = saved.sourceLang ?? 'auto';
+				targetLang = saved.targetLang ?? 'english';
+				instructions = saved.instructions ?? '';
+			}
+		} catch {}
 		mounted = true;
 		session = await getSession();
 		await refreshJobs();
 		pollInterval = setInterval(refreshJobs, 2000);
+	});
+
+	$effect(() => {
+		if (!mounted) return;
+		localStorage.setItem(STORAGE_KEY, JSON.stringify({ sourceLang, targetLang, instructions }));
 	});
 
 	onDestroy(() => {

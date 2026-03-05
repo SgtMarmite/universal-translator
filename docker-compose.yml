@@ -40,6 +40,10 @@ services:
     build: ./frontend
     ports:
       - "5174:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/svelte.config.js:/app/svelte.config.js
+      - ./frontend/vite.config.ts:/app/vite.config.ts
     depends_on:
       - api
 
