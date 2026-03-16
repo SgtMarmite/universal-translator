@@ -1,3 +1,4 @@
+import json
 import shutil
 from pathlib import Path
 
@@ -5,7 +6,6 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 
 from app.config import settings
-from app.worker.celery_app import celery_app
 
 router = APIRouter(prefix="/api")
 
@@ -31,63 +31,40 @@ def list_jobs(request: Request):
             continue
 
         job_id = job_dir.name
-        status = "unknown"
-        filename = ""
-        error = None
 
         original_name_path = job_dir / "original_filename"
         original_name = original_name_path.read_text().strip() if original_name_path.exists() else "unknown"
 
         output_files = list(job_dir.glob("output.*"))
+        error_path = job_dir / "error"
 
-        if output_files:
+        if error_path.exists():
+            status = "failed"
+            error = error_path.read_text().strip()
+        elif output_files:
             status = "completed"
-            filename = original_name
+            error = None
         else:
             status = "processing"
-            filename = original_name
+            error = None
 
-        # check celery task state for more accurate status
-        task_info_path = job_dir / "task_id"
-        if task_info_path.exists():
-            task_id = task_info_path.read_text().strip()
-            result = celery_app.AsyncResult(task_id)
-            if result.state == "PENDING":
-                status = "queued"
-            elif result.state == "PROCESSING" or result.state == "STARTED":
-                status = "processing"
-            elif result.state == "SUCCESS":
-                status = "completed"
-            elif result.state == "FAILURE":
-                status = "failed"
-                error = str(result.result) if result.result else "Translation failed"
+        review = None
+        review_path = job_dir / "review.json"
+        if review_path.exists():
+            try:
+                review = json.loads(review_path.read_text())
+            except json.JSONDecodeError:
+                pass
 
         jobs.append({
             "job_id": job_id,
             "status": status,
-            "filename": filename,
+            "filename": original_name,
             "error": error,
+            "review": review,
         })
 
     return {"jobs": jobs}
-
-
-@router.get("/jobs/{job_id}")
-def get_job(job_id: str, request: Request):
-    session_token = _get_session_or_401(request)
-    job_dir = Path(settings.data_dir) / session_token / job_id
-
-    if not job_dir.exists():
-        raise HTTPException(status_code=404, detail="Job not found")
-
-    output_files = list(job_dir.glob("output.*"))
-    status = "completed" if output_files else "processing"
-
-    return {
-        "job_id": job_id,
-        "status": status,
-        "has_output": bool(output_files),
-    }
 
 
 @router.get("/jobs/{job_id}/download")
@@ -110,13 +87,7 @@ def download_job(job_id: str, request: Request):
         path=str(output_file),
         filename=download_name,
         media_type="application/octet-stream",
-        background=_cleanup_after_download(job_dir),
     )
-
-
-def _cleanup_after_download(job_dir: Path):
-    from starlette.background import BackgroundTask
-    return BackgroundTask(shutil.rmtree, job_dir, ignore_errors=True)
 
 
 @router.delete("/jobs/{job_id}")

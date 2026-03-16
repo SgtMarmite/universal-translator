@@ -1,13 +1,23 @@
+import json
+import logging
 import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request, Response, UploadFile, Form
 
+from app.agents.pipeline import run_translation
 from app.config import settings
+from app.formats.base import get_handler
 from app.models.session import SUPPORTED_FORMATS
 from app.routes.session import ensure_session_token
-from app.worker.tasks import translate_file
 
+import app.formats.plaintext  # noqa: F401
+import app.formats.csv_handler  # noqa: F401
+import app.formats.docx_handler  # noqa: F401
+import app.formats.xlsx_handler  # noqa: F401
+import app.formats.pptx_handler  # noqa: F401
+
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api")
 
 
@@ -37,25 +47,48 @@ async def upload_and_translate(
 
     input_path = job_dir / f"input{ext}"
     input_path.write_bytes(content)
-
-    task = translate_file.delay(
-        session_token=session_token,
-        job_id=job_id,
-        filename=file.filename,
-        source_lang=source_lang,
-        target_lang=target_lang,
-        instructions=instructions or None,
-    )
-
-    (job_dir / "task_id").write_text(task.id)
     (job_dir / "original_filename").write_text(file.filename)
 
-    return {
-        "job_id": job_id,
-        "task_id": task.id,
-        "filename": file.filename,
-        "status": "queued",
-    }
+    try:
+        handler = get_handler(file.filename)
+        segments = handler.extract_texts(input_path)
+
+        if not segments:
+            output_path = job_dir / f"output{ext}"
+            handler.replace_texts(input_path, [], output_path)
+            return {"job_id": job_id, "filename": file.filename, "status": "completed", "review": None}
+
+        translations = None
+        review = None
+
+        async for agent_name, event_type, data in run_translation(
+            segments=segments,
+            source_lang=source_lang,
+            target_lang=target_lang,
+            session_token=session_token,
+            instructions=instructions or None,
+        ):
+            if event_type == "done":
+                translations = data["translations"]
+                review = data["review"]
+
+        if translations:
+            output_path = job_dir / f"output{ext}"
+            handler.replace_texts(input_path, translations, output_path)
+
+        if review:
+            (job_dir / "review.json").write_text(json.dumps(review, ensure_ascii=False))
+
+        return {"job_id": job_id, "filename": file.filename, "status": "completed", "review": review}
+
+    except Exception as e:
+        logger.exception(f"Translation failed for job {job_id}")
+        (job_dir / "error").write_text(str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+    finally:
+        if input_path.exists():
+            input_path.unlink()
 
 
 @router.post("/glossary")

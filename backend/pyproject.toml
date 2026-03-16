@@ -1,18 +1,15 @@
 [project]
 name = "universal-translator"
-version = "0.1.0"
+version = "0.2.0"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.34.0",
-    "celery[redis]>=5.4.0",
-    "redis>=5.0.0",
     "python-multipart>=0.0.18",
     "python-docx>=1.1.0",
     "openpyxl>=3.1.0",
     "python-pptx>=1.0.0",
-    "openai>=1.60.0",
-    "google-genai>=1.0.0",
+    "google-adk>=0.1.0",
     "pydantic-settings>=2.7.0",
     "itsdangerous>=2.2.0",
 ]
