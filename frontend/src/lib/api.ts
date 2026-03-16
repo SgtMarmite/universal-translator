@@ -1,4 +1,4 @@
-import type { SessionInfo, Job, TranslateResponse } from './types';
+import type { SessionInfo, Job, ReviewResult } from './types';
 
 const BASE = '/api';
 
@@ -18,19 +18,26 @@ export async function getSession(): Promise<SessionInfo> {
 	return request<SessionInfo>('/session');
 }
 
+export interface TranslateResult {
+	job_id: string;
+	filename: string;
+	status: string;
+	review: ReviewResult | null;
+}
+
 export async function uploadFile(
 	file: File,
 	sourceLang: string,
 	targetLang: string,
 	instructions: string
-): Promise<TranslateResponse> {
+): Promise<TranslateResult> {
 	const form = new FormData();
 	form.append('file', file);
 	form.append('source_lang', sourceLang);
 	form.append('target_lang', targetLang);
 	form.append('instructions', instructions);
 
-	return request<TranslateResponse>('/translate', {
+	return request<TranslateResult>('/translate', {
 		method: 'POST',
 		body: form
 	});

@@ -5,16 +5,23 @@ export interface SessionInfo {
 	has_session: boolean;
 }
 
-export interface Job {
-	job_id: string;
-	status: 'queued' | 'processing' | 'completed' | 'failed';
-	filename: string;
-	error: string | null;
+export interface ReviewResult {
+	score: number;
+	status: 'ok' | 'warning' | 'error';
+	issues: ReviewIssue[];
+	summary: string;
 }
 
-export interface TranslateResponse {
+export interface ReviewIssue {
+	segment_index: number;
+	type: 'terminology' | 'untranslated' | 'mistranslation' | 'formatting';
+	detail: string;
+}
+
+export interface Job {
 	job_id: string;
-	task_id: string;
+	status: 'processing' | 'completed' | 'failed';
 	filename: string;
-	status: string;
+	error: string | null;
+	review: ReviewResult | null;
 }

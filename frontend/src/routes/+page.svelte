@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 	import type { SessionInfo, Job } from '$lib/types';
 	import { getSession, uploadFile, getJobs } from '$lib/api';
 	import DropZone from '$lib/components/DropZone.svelte';
@@ -16,7 +16,6 @@
 	let instructions = $state('');
 	let uploading = $state(false);
 	let error = $state<string | null>(null);
-	let pollInterval: ReturnType<typeof setInterval>;
 	let mounted = $state(false);
 
 	onMount(async () => {
@@ -32,7 +31,6 @@
 		mounted = true;
 		session = await getSession();
 		await refreshJobs();
-		pollInterval = setInterval(refreshJobs, 2000);
 	});
 
 	$effect(() => {
@@ -40,16 +38,10 @@
 		localStorage.setItem(STORAGE_KEY, JSON.stringify({ sourceLang, targetLang, instructions }));
 	});
 
-	onDestroy(() => {
-		if (pollInterval) clearInterval(pollInterval);
-	});
-
 	async function refreshJobs() {
 		try {
 			jobs = await getJobs();
-		} catch {
-			// session not ready yet
-		}
+		} catch {}
 	}
 
 	async function handleFilesDrop(files: File[]) {
@@ -114,7 +106,7 @@
 					{#if uploading}
 						<div class="status-msg uploading">
 							<div class="spinner"></div>
-							Uploading...
+							Translating...
 						</div>
 					{/if}
 
@@ -131,7 +123,7 @@
 			{/if}
 
 			<footer>
-				<span class="provider-badge">LLM: Azure OpenAI</span>
+				<span class="provider-badge">Powered by Google ADK + Gemini</span>
 			</footer>
 		</div>
 	</main>
